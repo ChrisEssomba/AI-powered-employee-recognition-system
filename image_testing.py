@@ -6,20 +6,6 @@ import tensorflow as tf
 import cv2
 import numpy as np
 
-# Load TFLite model and allocate tensors
-interpreter = tf.lite.Interpreter(model_path="./model/model300.tflite")
-interpreter.allocate_tensors()
-
-# Get input and output tensors
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-
-# Load the image
-image_path1 = "D:\FutureExpertData\FaceRecognition\DeepFaceProject\dataset\Dominique_de_Villepin\Dominique_de_Villepin_0002.jpg"
-image_path2 = "D:\FutureExpertData\FaceRecognition\DeepFaceProject\dataset\Dominique_de_Villepin\Dominique_de_Villepin_0002_gaussian_noise.png"
-
-#Load folder
-folder_path = "./people"
 # Load and format the image
 def format_image(image_path):
     image = cv2.imread(image_path)
@@ -32,8 +18,7 @@ def format_image(image_path):
 #input_data1 = format_image(image_path1)
 #input_data2 = format_image(image_path2)
 
-
-
+# Extract image embedding
 def get_embedding(input_data):
     # Run inference for the first image
     interpreter.set_tensor(input_details[0]['index'], input_data)
@@ -43,7 +28,7 @@ def get_embedding(input_data):
 
 
 
-
+#Create a database with image name and its path
 def create_database(folder_path):
     # Initialize an empty dictionary for the database
     database = {}
@@ -57,11 +42,9 @@ def create_database(folder_path):
             database[image_file] = img_path  # Store the image path in the dictionary
     
     return database
-
-            
-    
-
-def image_in_database(image_path, database):
+   
+#Verify whether the data base contains the image
+def check_image_in_database(image_path, database):
     #Format image1
     input_data1 = format_image(image_path)
     embedding1 = get_embedding(input_data1)
@@ -85,8 +68,42 @@ def image_in_database(image_path, database):
     else:
         return "Person not found in the database."
     
+#Compare two images
+def compare_images(image_path1, image_path2):
+    #Format image1
+    input_data1 = format_image(image_path1)
+    embedding1 = get_embedding(input_data1)
+    #Format image2
+    input_data2 = format_image(image_path2)
+    embedding2 = get_embedding(input_data2)
+    distance = euclidean(embedding1, embedding2)
+    threshold = 0.5 # Set an appropriate threshold based on testing
+    if distance < threshold:
+        return 'These images show the same person'
+    else:
+        return 'These images show two different people'
 
-image_path = "D:\FutureExpertData\FaceRecognition\DeepFaceProject\dataset\Li_Zhaoxing\Li_Zhaoxing_0002_gaussian_noise.png"
+
+
+# Load TFLite model and allocate tensors
+interpreter = tf.lite.Interpreter(model_path="./model/model.tflite")
+interpreter.allocate_tensors()
+
+# Get input and output tensors
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+
+#Load folder
+folder_path = "./people"
+  
+#Check image in database
+image_path = "./dataset/Li_Zhaoxing/Li_Zhaoxing_0002_gaussian_noise.png"
 folder_path = "./people"
 database = create_database(folder_path)
-print(image_in_database(image_path, database))
+print(check_image_in_database(image_path, database))
+
+#Compare two images
+image_path1 = ".\dataset\Dominique_de_Villepin\Dominique_de_Villepin_0002.jpg"
+image_path2 = ".\people\Kim_Dae-jung.jpg"
+print(compare_images(image_path1, image_path2))
